@@ -13,4 +13,5 @@ def test_health_endpoint() -> None:
     assert response.json() == {
         "status": "healthy",
         "service": "AI Support System",
+        "database": "connected",
     }
