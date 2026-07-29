@@ -21,8 +21,6 @@ from app.schemas.llm import (
     LLMTextResponse,
     LLMToolCall,
 )
-from app.tools.definitions import OPENAI_TOOL_DEFINITIONS
-
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +83,7 @@ class LLMService:
                         "content": message,
                     },
                 ],
-                tools=OPENAI_TOOL_DEFINITIONS,
+                tools=GROQ_TOOL_DEFINITIONS,
                 tool_choice="auto",
                 temperature=0.1,
                 max_tokens=settings.llm_max_output_tokens,

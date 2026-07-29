@@ -4,23 +4,18 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.tool import ToolResult
-from app.tools.registry import get_tool, list_tools
+from app.tools.registry import get_tool
 
 
 logger = logging.getLogger(__name__)
 
 
 class ToolService:
-    def get_available_tools(
+    async def execute(
         self,
-    ) -> list[dict[str, str]]:
-        return list_tools()
-
-    async def execute_tool(
-        self,
-        db: AsyncSession,
         tool_name: str,
         arguments: dict[str, Any],
+        session: AsyncSession,
     ) -> ToolResult:
         tool = get_tool(tool_name)
 
@@ -28,48 +23,46 @@ class ToolService:
             return ToolResult(
                 success=False,
                 tool_name=tool_name,
-                message="Tool not found",
-                data={
-                    "available_tools": [
-                        item["name"]
-                        for item in list_tools()
-                    ]
-                },
+                message="The requested tool does not exist.",
+                data=None,
                 error_code="TOOL_NOT_FOUND",
             )
 
-        logger.info(
-            "Executing tool name=%s",
-            tool_name,
-        )
-
         try:
-            result = await tool.execute(
-                db=db,
-                arguments=arguments,
+            return await tool.execute(
+                session=session,
+                **arguments,
             )
 
-            logger.info(
-                "Tool completed name=%s success=%s",
-                tool_name,
-                result.success,
-            )
-
-            return result
-
-        except Exception:
+        except TypeError as error:
             logger.exception(
-                "Tool execution failed name=%s",
+                "Invalid tool arguments tool_name=%s",
                 tool_name,
             )
 
             return ToolResult(
                 success=False,
                 tool_name=tool_name,
-                message=(
-                    "An unexpected error occurred "
-                    "while executing the tool"
-                ),
+                message=str(error),
+                data={
+                    "received_arguments": list(arguments.keys()),
+                },
+                error_code="INVALID_TOOL_ARGUMENTS",
+            )
+
+        except Exception:
+            logger.exception(
+                "Tool execution failed tool_name=%s",
+                tool_name,
+            )
+
+            await session.rollback()
+
+            return ToolResult(
+                success=False,
+                tool_name=tool_name,
+                message="Tool execution failed.",
+                data=None,
                 error_code="TOOL_EXECUTION_ERROR",
             )
 
