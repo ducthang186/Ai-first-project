@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: ai_support_postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: ai_support_user
+      POSTGRES_PASSWORD: ai_support_password
+      POSTGRES_DB: ai_support_db
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ai_support_user -d ai_support_db"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
