@@ -1,4 +1,0 @@
-run docker postresql: docker exec -it ai_support_postgres psql -U ai_support_user -d ai_support_db
-
-
-docker exec -it ai_support_postgres psql -U ai_support_user -d ai_support_db  
